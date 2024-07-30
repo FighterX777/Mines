@@ -1,29 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mines Game</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .animate {
+            animation-duration: 0.75s;
+            animation-delay: 0.5s;
+            animation-name: animate-drop;
+            animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+            animation-fill-mode: backwards;
+        }
+
+        @keyframes animate-drop {
+            0% {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .h1 {
+            text-align: center;
+        }
+
+        .game-setup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #money-slider {
+            width: 50%;
+            height: 20px;
+            margin: 20px;
+        }
+
+        #money-counter {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .game-board-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-board {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            border: 2px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .money-counter-container {
+            flex: 0 0 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Mobile Styles */
+
+        @media only screen and (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+            }
+
+            .game-board-container {
+                flex: 1;
+            }
+
+            .money-counter-container {
+                flex: 1;
+            }
+
+            .card {
+                width: 70px;
+                height: 70px;
+                font-size: 18px;
+            }
+        }
+
+        /* Tablet Styles */
+
+        @media only screen and (min-width: 769px) and (max-width: 1024px) {
+            .card {
+                width: 100px;
+                height: 100px;
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
-<body>
-    <h1>Mines Game</h1>
+
+<body class="animate">
+    <h1 class="h1">Mines Game</h1>
     <div class="game-setup">
         <label for="money-slider">Set Money Counter:</label>
         <input type="range" id="money-slider" min="10" max="1000" value="100">
-        <span id="money-counter">Money: $100</span>
+        <div class="money-counter-container">
+            <div class="money-counter">Money: $100</div>
+            <div class="win-lose-counter">Win Streak: 0</div>
+            <div>Money should be more than $500 to start the game.</div>
+        </div>
         <button id="start-game">Start Game</button>
     </div>
     <div class="game-container">
         <div class="game-board-container">
             <div class="game-board"></div>
         </div>
-        <div class="money-counter-container">
-            <div class="money-counter">Money: $100</div>
-            <div class="win-lose-counter">Win Streak: 0</div>
-        </div>
     </div>
 
-    <script src="gameScript.js"></script>
+    <script>
+        const gameBoard = document.querySelector('.game-board');
+        const moneyCounter = document.querySelector('.money-counter');
+        const winLoseCounter = document.querySelector('.win-lose-counter');
+        const moneySlider = document.getElementById('money-slider');
+        const startGameButton = document.getElementById('start-game');
+
+        let gameState = {
+            money: 100,
+            cards: [],
+            winStreak: 0,
+            bombChance: 0.3
+        };
+
+        moneySlider.addEventListener('input', () => {
+            gameState.money = parseInt(moneySlider.value); // Parse the slider value to an integer
+            moneyCounter.textContent = `Money: $${gameState.money}`;
+        });
+
+        startGameButton.addEventListener('click', startGame);
+
+        function startGame() {
+            gameState.cards = [];
+            gameState.winStreak = 0;
+            generateCards();
+            renderBoard();
+        }
+
+        function checkGameOver() {
+            if (gameState.money <= 500) {
+                alert('Game Over! Money should be more than 500.');
+                startGameButton.disabled = true; // Disable the start game button
+                moneySlider.disabled = true; // Disable the money slider
+                resetGame();
+            }
+        }
+
+        function revealBombCard(index) {
+            renderBoard();
+            setTimeout(() => {
+                alert('Game Over!');
+                resetGame();
+            }, 500); // Wait for 1 second before game over
+        }
+
+        function resetGame() {
+            gameState.money = 100;
+            gameState.cards = [];
+            gameState.winStreak = 0;
+            gameState.bombChance = 0.3;
+            moneySlider.value = 100;
+            moneyCounter.textContent = `Money: $${gameState.money}`;
+            winLoseCounter.textContent = `Win Streak: ${gameState.winStreak}`;
+            gameBoard.innerHTML = '';
+            startGameButton.disabled = false;
+            moneySlider.disabled = false;
+        }
+
+        function generateCards() {
+            for (let i = 0; i < 20; i++) {
+                const card = {
+                    type: Math.random() < gameState.bombChance ? 'bomb' : 'diamond',
+                    revealed: false
+                };
+                gameState.cards.push(card);
+            }
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            for (let i = 0; i < gameState.cards.length; i++) {
+                const card = gameState.cards[i];
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.index = i;
+                if (card.revealed) {
+                    if (card.type === 'diamond') {
+                        cardElement.textContent = '';
+                        cardElement.style.backgroundColor = 'green';
+                    } else {
+                        cardElement.textContent = '';
+                        cardElement.style.backgroundColor = 'red';
+                    }
+                }
+                cardElement.addEventListener('click', () => revealCard(i));
+                gameBoard.appendChild(cardElement);
+            }
+            // Add CSS grid layout to display cards in a 4x5 grid
+            gameBoard.style.display = 'grid';
+            gameBoard.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            gameBoard.style.gridGap = '10px';
+            moneyCounter.textContent = `Money: $${gameState.money}`;
+            winLoseCounter.textContent = `Win Streak: ${gameState.winStreak}`;
+        }
+
+        function revealCard(index) {
+            const card = gameState.cards[index];
+            if (card.revealed) {
+                return;
+            }
+            card.revealed = true;
+            if (card.type === 'diamond') {
+                gameState.money *= 2;
+                gameState.winStreak++;
+                if (gameState.winStreak >= 3) {
+                    gameState.bombChance -= 0.1;
+                }
+            } else {
+                revealBombCard();
+            }
+            renderBoard();
+            checkGameOver();
+        }
+    </script>
 </body>
+
 </html>
