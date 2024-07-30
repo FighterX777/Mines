@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Mines Game</h1>
+    <div class="game-setup">
+        <label for="money-slider">Set Money Counter:</label>
+        <input type="range" id="money-slider" min="10" max="1000" value="100">
+        <span id="money-counter">Money: $100</span>
+        <button id="start-game">Start Game</button>
+    </div>
+    <div class="game-container">
+        <div class="game-board-container">
+            <div class="game-board"></div>
+        </div>
+        <div class="money-counter-container">
+            <div class="money-counter">Money: $100</div>
+            <div class="win-lose-counter">Win Streak: 0</div>
+        </div>
+    </div>
+
+    <script src="gameScript.js"></script>
+</body>
+</html>
